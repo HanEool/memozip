@@ -880,10 +880,11 @@ function updateTodoList(data) {
 }
 
 // 리스트 삭제 시 해당 리스트의 모든 항목도 함께 삭제
+// 멱등: 이미 없는 id 삭제 호출 시도 success 반환 (frontend race condition 대응)
 function deleteTodoList(id) {
   const listSheet = ensureTodoListSheet();
   const lastRow = listSheet.getLastRow();
-  if (lastRow < DATA_START_ROW) return { error: 'No data' };
+  if (lastRow < DATA_START_ROW) return { success: true, alreadyDeleted: true };
 
   // 0. 삭제할 리스트의 googleListId 미리 조회
   let googleListId = '';
@@ -920,7 +921,8 @@ function deleteTodoList(id) {
       return { success: true };
     }
   }
-  return { error: 'TodoList not found' };
+  // 못 찾아도 success (이미 삭제됐거나 tempId라 매칭 안 됨 — 부활 방지)
+  return { success: true, alreadyDeleted: true };
 }
 
 // ── 할일 항목 CRUD ──
@@ -1045,10 +1047,11 @@ function updateTodo(data) {
 }
 
 // 항목 삭제 시 자식(부모아이디 === id)도 함께 삭제
+// 멱등: 이미 없는 id 삭제 호출 시도 success 반환 (frontend race condition 대응)
 function deleteTodo(id) {
   const sheet = ensureTodoSheet();
   const lastRow = sheet.getLastRow();
-  if (lastRow < DATA_START_ROW) return { error: 'No data' };
+  if (lastRow < DATA_START_ROW) return { success: true, alreadyDeleted: true };
 
   const data = sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, 8).getValues();
   let targetFound = false;
@@ -1066,7 +1069,8 @@ function deleteTodo(id) {
       if (data[i][0] === id) targetFound = true;
     }
   }
-  return targetFound ? { success: true } : { error: 'Todo not found' };
+  // 못 찾아도 success (이미 삭제됐거나 tempId라 매칭 안 됨 — 부활 방지)
+  return { success: true, alreadyDeleted: !targetFound };
 }
 
 // ============================================================
