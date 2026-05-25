@@ -13,7 +13,15 @@ const SHEET_EVENT = '일정';
 const SHEET_CARE = '케어';
 const SHEET_TASTE = '취향';
 const SHEET_HUMOR = '유머';
+const SHEET_TODO_LIST = '할일리스트';
+const SHEET_TODO = '할일';
 const DATA_START_ROW = 4; // Row1=시스템, Row2=공백, Row3=헤더, Row4~=데이터
+
+// 새 할일 리스트 생성 시 색상 자동 순환 배정
+const TODO_LIST_COLORS = ['mint', 'sky', 'rose', 'gold', 'accent', 'lavender'];
+
+// 기본 리스트 (시트 초기 생성 시 자동 추가)
+const DEFAULT_TODO_LISTS = ['짓기', '살기', '아이디어'];
 
 // ============================================================
 // 웹 API 라우팅
@@ -107,6 +115,30 @@ function doGet(e) {
         break;
       case 'deleteHumor':
         result = deleteHumor(id);
+        break;
+      case 'getTodoLists':
+        result = getTodoLists();
+        break;
+      case 'addTodoList':
+        result = addTodoList(data);
+        break;
+      case 'updateTodoList':
+        result = updateTodoList(data);
+        break;
+      case 'deleteTodoList':
+        result = deleteTodoList(id);
+        break;
+      case 'getTodos':
+        result = getTodos(e.parameter.listId);
+        break;
+      case 'addTodo':
+        result = addTodo(data);
+        break;
+      case 'updateTodo':
+        result = updateTodo(data);
+        break;
+      case 'deleteTodo':
+        result = deleteTodo(id);
         break;
       default:
         result = { error: 'Unknown action: ' + action };
@@ -715,6 +747,237 @@ function deleteHumor(id) {
 }
 
 // ============================================================
+// 할일 CRUD (리스트업 — 캘린더 연동 없음, 2단계 들여쓰기)
+// ============================================================
+// 구조: 할일리스트 시트(리스트 메타) + 할일 시트(항목)
+// 항목은 parentId가 비어있으면 top-level, 값 있으면 하위 항목
+
+// 할일리스트 시트 (5열): 아이디 | 이름 | 순서 | 색상 | 수정일시
+function ensureTodoListSheet() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(SHEET_TODO_LIST);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_TODO_LIST);
+    sheet.getRange(1, 1).setValue('한얼 스케줄 관리 시스템 - 할일리스트');
+    sheet.getRange(3, 1, 1, 5).setValues([[
+      '아이디', '이름', '순서', '색상', '수정일시'
+    ]]);
+
+    // 기본 리스트 자동 생성 (짓기, 살기, 아이디어)
+    const timestamp = now();
+    DEFAULT_TODO_LISTS.forEach((name, idx) => {
+      const id = generateId('todolist');
+      sheet.appendRow([
+        id, name, idx, TODO_LIST_COLORS[idx % TODO_LIST_COLORS.length], timestamp
+      ]);
+    });
+  }
+  return sheet;
+}
+
+// 할일 시트 (7열): 아이디 | 리스트아이디 | 부모아이디 | 텍스트 | 완료여부 | 순서 | 수정일시
+function ensureTodoSheet() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(SHEET_TODO);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_TODO);
+    sheet.getRange(1, 1).setValue('한얼 스케줄 관리 시스템 - 할일');
+    sheet.getRange(3, 1, 1, 7).setValues([[
+      '아이디', '리스트아이디', '부모아이디', '텍스트', '완료여부', '순서', '수정일시'
+    ]]);
+  }
+  return sheet;
+}
+
+// ── 할일 리스트 (카드) CRUD ──
+
+function getTodoLists() {
+  const sheet = ensureTodoListSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < DATA_START_ROW) return [];
+
+  const data = sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, 5).getValues();
+  return data.filter(row => row[0] !== '').map(row => ({
+    id: row[0],
+    name: row[1] || '',
+    order: typeof row[2] === 'number' ? row[2] : parseInt(row[2]) || 0,
+    color: row[3] || 'accent',
+    lastModified: row[4]
+  })).sort((a, b) => a.order - b.order);
+}
+
+function addTodoList(data) {
+  const sheet = ensureTodoListSheet();
+  const id = generateId('todolist');
+  const timestamp = now();
+
+  // 새 리스트 순서 = 현재 최대 순서 + 1
+  const existing = getTodoLists();
+  const nextOrder = existing.length > 0 ? Math.max.apply(null, existing.map(l => l.order)) + 1 : 0;
+  const color = data.color || TODO_LIST_COLORS[existing.length % TODO_LIST_COLORS.length];
+
+  sheet.appendRow([
+    id,
+    data.name || '새 리스트',
+    typeof data.order === 'number' ? data.order : nextOrder,
+    color,
+    timestamp
+  ]);
+
+  return { success: true, id: id };
+}
+
+function updateTodoList(data) {
+  const sheet = ensureTodoListSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < DATA_START_ROW) return { error: 'No data' };
+
+  const ids = sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (ids[i][0] === data.id) {
+      const row = DATA_START_ROW + i;
+      // 부분 업데이트: 보내지 않은 필드는 보존
+      const current = sheet.getRange(row, 2, 1, 3).getValues()[0];
+      sheet.getRange(row, 2, 1, 4).setValues([[
+        data.name !== undefined ? data.name : current[0],
+        typeof data.order === 'number' ? data.order : current[1],
+        data.color !== undefined ? data.color : current[2],
+        now()
+      ]]);
+      return { success: true };
+    }
+  }
+  return { error: 'TodoList not found' };
+}
+
+// 리스트 삭제 시 해당 리스트의 모든 항목도 함께 삭제
+function deleteTodoList(id) {
+  const listSheet = ensureTodoListSheet();
+  const lastRow = listSheet.getLastRow();
+  if (lastRow < DATA_START_ROW) return { error: 'No data' };
+
+  // 1. 해당 리스트의 항목들 모두 삭제
+  const todoSheet = ensureTodoSheet();
+  const todoLastRow = todoSheet.getLastRow();
+  if (todoLastRow >= DATA_START_ROW) {
+    const todoData = todoSheet.getRange(DATA_START_ROW, 1, todoLastRow - DATA_START_ROW + 1, 2).getValues();
+    // 뒤에서부터 삭제 (인덱스 꼬임 방지)
+    for (let i = todoData.length - 1; i >= 0; i--) {
+      if (todoData[i][0] && todoData[i][1] === id) {
+        todoSheet.deleteRow(DATA_START_ROW + i);
+      }
+    }
+  }
+
+  // 2. 리스트 메타 삭제
+  const ids = listSheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (ids[i][0] === id) {
+      listSheet.deleteRow(DATA_START_ROW + i);
+      return { success: true };
+    }
+  }
+  return { error: 'TodoList not found' };
+}
+
+// ── 할일 항목 CRUD ──
+
+// listId 지정 시 해당 리스트만, 미지정 시 전체
+function getTodos(listId) {
+  const sheet = ensureTodoSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < DATA_START_ROW) return [];
+
+  const data = sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, 7).getValues();
+  return data.filter(row => {
+    if (row[0] === '') return false;
+    if (listId && row[1] !== listId) return false;
+    return true;
+  }).map(row => ({
+    id: row[0],
+    listId: row[1] || '',
+    parentId: row[2] || '',
+    text: row[3] || '',
+    done: row[4] === true || row[4] === 'TRUE' || row[4] === 'true',
+    order: typeof row[5] === 'number' ? row[5] : parseInt(row[5]) || 0,
+    lastModified: row[6]
+  })).sort((a, b) => a.order - b.order);
+}
+
+function addTodo(data) {
+  const sheet = ensureTodoSheet();
+  if (!data.listId) return { error: 'listId is required' };
+
+  const id = generateId('todo');
+  const timestamp = now();
+
+  // 같은 리스트 + 같은 부모 안에서 다음 순서
+  let nextOrder = 0;
+  if (typeof data.order !== 'number') {
+    const siblings = getTodos(data.listId).filter(t => (t.parentId || '') === (data.parentId || ''));
+    nextOrder = siblings.length > 0 ? Math.max.apply(null, siblings.map(t => t.order)) + 1 : 0;
+  } else {
+    nextOrder = data.order;
+  }
+
+  sheet.appendRow([
+    id,
+    data.listId,
+    data.parentId || '',
+    data.text || '',
+    data.done === true,
+    nextOrder,
+    timestamp
+  ]);
+
+  return { success: true, id: id };
+}
+
+function updateTodo(data) {
+  const sheet = ensureTodoSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < DATA_START_ROW) return { error: 'No data' };
+
+  const ids = sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (ids[i][0] === data.id) {
+      const row = DATA_START_ROW + i;
+      // 부분 업데이트: 보내지 않은 필드는 보존
+      const current = sheet.getRange(row, 2, 1, 5).getValues()[0];
+      sheet.getRange(row, 2, 1, 6).setValues([[
+        data.listId !== undefined ? data.listId : current[0],
+        data.parentId !== undefined ? data.parentId : current[1],
+        data.text !== undefined ? data.text : current[2],
+        data.done !== undefined ? (data.done === true) : current[3],
+        typeof data.order === 'number' ? data.order : current[4],
+        now()
+      ]]);
+      return { success: true };
+    }
+  }
+  return { error: 'Todo not found' };
+}
+
+// 항목 삭제 시 자식(부모아이디 === id)도 함께 삭제
+function deleteTodo(id) {
+  const sheet = ensureTodoSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < DATA_START_ROW) return { error: 'No data' };
+
+  const data = sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, 3).getValues();
+  let targetFound = false;
+  // 뒤에서부터 삭제: target과 자식 모두 제거
+  for (let i = data.length - 1; i >= 0; i--) {
+    if (!data[i][0]) continue;
+    if (data[i][0] === id || data[i][2] === id) {
+      sheet.deleteRow(DATA_START_ROW + i);
+      if (data[i][0] === id) targetFound = true;
+    }
+  }
+  return targetFound ? { success: true } : { error: 'Todo not found' };
+}
+
+// ============================================================
 // Google Calendar 생성 함수
 // ============================================================
 
@@ -1282,6 +1545,37 @@ function initializeSheets() {
   humorSheet.getRange(1, 1).setValue('한얼 스케줄 관리 시스템 - 유머');
   humorSheet.getRange(3, 1, 1, 6).setValues([[
     '아이디', '제목', '내용', '태그', '날짜', '추가일시'
+  ]]);
+
+  // 할일리스트 시트
+  let todoListSheet = ss.getSheetByName(SHEET_TODO_LIST);
+  const todoListIsNew = !todoListSheet;
+  if (!todoListSheet) {
+    todoListSheet = ss.insertSheet(SHEET_TODO_LIST);
+  }
+  todoListSheet.getRange(1, 1).setValue('한얼 스케줄 관리 시스템 - 할일리스트');
+  todoListSheet.getRange(3, 1, 1, 5).setValues([[
+    '아이디', '이름', '순서', '색상', '수정일시'
+  ]]);
+  // 새로 생성된 경우에만 기본 리스트 추가 (재실행 시 중복 방지)
+  if (todoListIsNew) {
+    const timestamp = now();
+    DEFAULT_TODO_LISTS.forEach((name, idx) => {
+      const id = generateId('todolist');
+      todoListSheet.appendRow([
+        id, name, idx, TODO_LIST_COLORS[idx % TODO_LIST_COLORS.length], timestamp
+      ]);
+    });
+  }
+
+  // 할일 시트
+  let todoSheet = ss.getSheetByName(SHEET_TODO);
+  if (!todoSheet) {
+    todoSheet = ss.insertSheet(SHEET_TODO);
+  }
+  todoSheet.getRange(1, 1).setValue('한얼 스케줄 관리 시스템 - 할일');
+  todoSheet.getRange(3, 1, 1, 7).setValues([[
+    '아이디', '리스트아이디', '부모아이디', '텍스트', '완료여부', '순서', '수정일시'
   ]]);
 
   return { success: true, message: '시트 초기화 완료' };

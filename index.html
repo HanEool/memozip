@@ -269,6 +269,139 @@
   .loading{text-align:center;padding:24px;color:var(--text-dim);font-size:13px}
   .via-cal{font-size:10px;color:var(--text-faint);font-style:italic}
 
+  /* ── 할일 보드 (Google Tasks 스타일 카드 가로 정렬) ── */
+  .todo-board{
+    display:flex;gap:12px;overflow-x:auto;padding:4px 4px 12px;margin:0 -4px;
+    scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+  }
+  .todo-board::-webkit-scrollbar{height:6px}
+  .todo-board::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  .todo-board::-webkit-scrollbar-track{background:transparent}
+
+  .todo-card{
+    flex:0 0 280px;min-width:280px;scroll-snap-align:start;
+    background:var(--surface);border:1px solid var(--border-lt);border-radius:14px;
+    padding:14px 12px 10px;box-shadow:var(--sh-sm);
+    display:flex;flex-direction:column;max-height:70vh;
+  }
+  .todo-card.color-mint{border-top:3px solid var(--mint)}
+  .todo-card.color-sky{border-top:3px solid var(--sky)}
+  .todo-card.color-rose{border-top:3px solid var(--rose)}
+  .todo-card.color-gold{border-top:3px solid var(--gold)}
+  .todo-card.color-accent{border-top:3px solid var(--accent)}
+  .todo-card.color-lavender{border-top:3px solid var(--accent)}
+
+  .todo-card-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 4px 10px;margin-bottom:6px;border-bottom:1px solid var(--border-lt);
+  }
+  .todo-card-title{
+    font-family:'Nanum Myeongjo',serif;font-size:14.5px;font-weight:700;
+    color:var(--text);letter-spacing:-.01em;flex:1;cursor:pointer;
+  }
+  .todo-card-count{
+    font-family:'Noto Sans KR',sans-serif;font-size:10.5px;font-weight:400;
+    color:var(--text-faint);background:var(--surface2);padding:1px 7px;border-radius:8px;
+    margin:0 6px;
+  }
+  .todo-card-menu{
+    background:transparent;border:none;color:var(--text-faint);cursor:pointer;
+    width:24px;height:24px;border-radius:6px;font-size:14px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .todo-card-menu:hover{background:var(--surface2);color:var(--text)}
+
+  .todo-card-body{
+    flex:1;overflow-y:auto;min-height:40px;
+    margin:0 -4px;padding:0 4px;
+  }
+  .todo-card-body::-webkit-scrollbar{width:4px}
+  .todo-card-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+  .todo-item{
+    display:flex;align-items:flex-start;gap:8px;padding:6px 4px;
+    border-radius:6px;transition:background .15s;position:relative;
+  }
+  .todo-item:hover{background:var(--surface2)}
+  .todo-item.child{padding-left:26px}
+  .todo-item.done .todo-text{color:var(--text-faint);text-decoration:line-through}
+
+  .todo-check{
+    flex-shrink:0;width:16px;height:16px;border:1.5px solid var(--text-faint);
+    border-radius:50%;cursor:pointer;margin-top:3px;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .2s;background:transparent;
+  }
+  .todo-check:hover{border-color:var(--accent)}
+  .todo-check.checked{background:var(--accent);border-color:var(--accent)}
+  .todo-check.checked::after{
+    content:'';width:8px;height:4px;border-left:1.5px solid var(--accent-fg);
+    border-bottom:1.5px solid var(--accent-fg);transform:rotate(-45deg) translate(1px,-1px);
+  }
+
+  .todo-text{
+    flex:1;font-size:13px;line-height:1.45;color:var(--text);cursor:pointer;
+    word-break:break-word;white-space:pre-wrap;padding:1px 0;
+  }
+  .todo-text-edit{
+    flex:1;font-size:13px;line-height:1.45;color:var(--text);
+    background:var(--bg);border:1px solid var(--accent);border-radius:6px;
+    padding:4px 8px;outline:none;font-family:inherit;
+  }
+
+  .todo-actions{
+    display:none;gap:2px;flex-shrink:0;
+  }
+  .todo-item:hover .todo-actions{display:flex}
+  .todo-action{
+    background:transparent;border:none;color:var(--text-faint);cursor:pointer;
+    width:22px;height:22px;border-radius:5px;font-size:11px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .todo-action:hover{background:var(--surface);color:var(--text)}
+  .todo-action.add-child{color:var(--text-dim)}
+  .todo-action.add-child:hover{color:var(--accent)}
+  .todo-action.remove:hover{color:var(--rose)}
+
+  .todo-add-row{
+    display:flex;align-items:center;gap:8px;padding:8px 4px 4px;
+    border-top:1px solid var(--border-lt);margin-top:6px;
+    color:var(--text-dim);cursor:pointer;font-size:12.5px;
+  }
+  .todo-add-row:hover{color:var(--accent)}
+  .todo-add-row-icon{font-size:14px;line-height:1}
+
+  .todo-add-input{
+    width:100%;background:var(--bg);border:1px solid var(--accent);color:var(--text);
+    padding:7px 10px;border-radius:7px;font-size:13px;font-family:inherit;outline:none;
+    box-sizing:border-box;
+  }
+
+  .todo-new-list-card{
+    flex:0 0 200px;min-width:200px;scroll-snap-align:start;
+    background:transparent;border:1.5px dashed var(--border);border-radius:14px;
+    padding:14px;display:flex;align-items:center;justify-content:center;
+    color:var(--text-dim);cursor:pointer;font-size:13px;
+    transition:all .25s;min-height:80px;
+  }
+  .todo-new-list-card:hover{border-color:var(--accent);color:var(--accent)}
+
+  .todo-list-menu-overlay{
+    display:none;position:fixed;inset:0;z-index:150;
+  }
+  .todo-list-menu-overlay.open{display:block}
+  .todo-list-menu{
+    position:absolute;background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;padding:4px;box-shadow:var(--sh-lg);min-width:140px;
+  }
+  .todo-list-menu button{
+    display:block;width:100%;text-align:left;padding:8px 12px;
+    background:transparent;border:none;color:var(--text);font-size:13px;
+    font-family:inherit;cursor:pointer;border-radius:6px;
+  }
+  .todo-list-menu button:hover{background:var(--surface2)}
+  .todo-list-menu button.danger{color:var(--rose)}
+
   @media(max-width:480px){
     .app{padding:20px 14px 100px}
     .form-panel{padding:24px 18px calc(28px + env(safe-area-inset-bottom))}
@@ -291,7 +424,8 @@
   </header>
 
   <div class="tabs">
-    <button class="tab active" data-tab="week" onclick="switchTab('week')">주간</button>
+    <button class="tab active" data-tab="todo" onclick="switchTab('todo')">할일</button>
+    <button class="tab" data-tab="week" onclick="switchTab('week')">주간</button>
     <button class="tab" data-tab="routine" onclick="switchTab('routine')">루틴</button>
     <button class="tab" data-tab="event" onclick="switchTab('event')">일정</button>
     <button class="tab" data-tab="care" onclick="switchTab('care')">케어</button>
@@ -299,13 +433,21 @@
     <button class="tab" data-tab="humor" onclick="switchTab('humor')">유머</button>
   </div>
 
-  <div class="tab-panel active" id="panel-week">
+  <div class="tab-panel active" id="panel-todo">
+    <div class="todo-board" id="todoBoard"></div>
+  </div>
+
+  <div class="tab-panel" id="panel-week">
     <div class="week-nav">
       <button class="week-nav-btn" onclick="changeWeek(-1)">&#8249;</button>
       <span class="week-label" id="weekLabel"></span>
       <button class="week-nav-btn" onclick="changeWeek(1)">&#8250;</button>
     </div>
     <div id="weekView"></div>
+  </div>
+
+  <div class="todo-list-menu-overlay" id="todoListMenuOverlay" onclick="closeTodoListMenu(event)">
+    <div class="todo-list-menu" id="todoListMenu"></div>
   </div>
 
   <div class="tab-panel" id="panel-routine"><div id="routineList"></div></div>
@@ -477,6 +619,7 @@
   <div class="form-panel" style="padding-bottom:calc(36px + env(safe-area-inset-bottom))">
     <div class="form-title">무엇을 추가할까요?</div>
     <div class="form-actions" style="margin-top:0;gap:6px;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="closeForm('addChoiceOverlay');promptNewTodoList()">새 리스트</button>
       <button class="btn btn-secondary" onclick="closeForm('addChoiceOverlay');openRoutineForm()">루틴</button>
       <button class="btn btn-secondary" onclick="closeForm('addChoiceOverlay');openEventForm()">일정</button>
       <button class="btn btn-secondary" onclick="closeForm('addChoiceOverlay');openCareForm()">케어</button>
@@ -490,7 +633,7 @@
 
 <script>
 var API_URL='https://script.google.com/a/macros/somaandbody.com/s/AKfycbz23iMsMa7QiETq50kVDTj8KUtRoSzBqsZZhkDCqC7ZZmlyFjv5IqJ6E_KAKyZT3IFI/exec';
-var currentWeekDate=new Date(),currentEventMonth=new Date(),routinesCache=[],eventsCache=[],caresCache=[],tastesCache=[],humorsCache=[],isSaving=false,routineMode='weekly',careFilterTag='',tasteFilterCat='',tasteRating=0,humorFilterTag='';
+var currentWeekDate=new Date(),currentEventMonth=new Date(),routinesCache=[],eventsCache=[],caresCache=[],tastesCache=[],humorsCache=[],todoListsCache=[],todosCache=[],isSaving=false,routineMode='weekly',careFilterTag='',tasteFilterCat='',tasteRating=0,humorFilterTag='';
 
 function toggleTheme(){
   var h=document.documentElement,n=h.getAttribute('data-theme')==='bright'?'dark':'bright';
@@ -509,7 +652,7 @@ function loadLS(k){try{var s=localStorage.getItem(k);return s?JSON.parse(s):null
 
 function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
 
-function switchTab(n){document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===n)});document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.toggle('active',p.id==='panel-'+n)});if(n==='week')loadWeekView();else if(n==='routine')loadRoutines();else if(n==='event')loadEvents();else if(n==='care')loadCares();else if(n==='taste')loadTastes();else if(n==='humor')loadHumors()}
+function switchTab(n){document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===n)});document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.toggle('active',p.id==='panel-'+n)});if(n==='week')loadWeekView();else if(n==='routine')loadRoutines();else if(n==='event')loadEvents();else if(n==='care')loadCares();else if(n==='taste')loadTastes();else if(n==='humor')loadHumors();else if(n==='todo')loadTodos()}
 
 var DAY_NAMES=['일','월','화','수','목','금','토'];
 function getMonday(d){var dt=new Date(d);dt.setDate(dt.getDate()-((dt.getDay()+6)%7));return dt}
@@ -1155,6 +1298,303 @@ function removeHumor(id){
   });
 }
 
+// === 할일 (리스트업, 캘린더 연동 없음) ===
+// 데이터 모델: todoListsCache (카드들) + todosCache (모든 항목)
+// 항목의 parentId가 비어있으면 top-level, 값 있으면 하위 항목 (2단계까지만)
+
+function saveTodoCache(){saveLS('todoListsCache',todoListsCache);saveLS('todosCache',todosCache)}
+
+function loadTodos(){
+  var c=document.getElementById('todoBoard');
+  // 캐시 있으면 즉시 렌더
+  if(!todoListsCache.length){var s1=loadLS('todoListsCache');if(s1)todoListsCache=s1}
+  if(!todosCache.length){var s2=loadLS('todosCache');if(s2)todosCache=s2}
+  if(todoListsCache.length)renderTodoBoard();
+  else c.innerHTML='<div class="loading">불러오는 중...</div>';
+
+  // 서버에서 최신 데이터 가져오기 (병렬)
+  Promise.all([
+    apiGet({action:'getTodoLists'}),
+    apiGet({action:'getTodos'})
+  ]).then(function(r){
+    var lists=Array.isArray(r[0])?r[0]:[];
+    var todos=Array.isArray(r[1])?r[1]:[];
+    var pendingLists=todoListsCache.filter(function(l){return l._pending});
+    var pendingTodos=todosCache.filter(function(t){return t._pending});
+    todoListsCache=lists.concat(pendingLists);
+    todosCache=todos.concat(pendingTodos);
+    saveTodoCache();renderTodoBoard();
+  }).catch(function(){
+    if(!todoListsCache.length)c.innerHTML='<div class="empty-state">데이터를 불러올 수 없습니다.</div>';
+  });
+}
+
+function renderTodoBoard(){
+  var c=document.getElementById('todoBoard');
+  // 리스트 정렬 (order 오름차순)
+  var sorted=todoListsCache.slice().sort(function(a,b){return (a.order||0)-(b.order||0)});
+  var html=sorted.map(function(l){return renderTodoCard(l)}).join('');
+  // 끝에 "+ 새 리스트" 카드
+  html+='<div class="todo-new-list-card" onclick="promptNewTodoList()">+ 새 리스트</div>';
+  c.innerHTML=html;
+}
+
+function renderTodoCard(list){
+  // 이 리스트의 항목들 (parentId 기준 트리 구성)
+  var items=todosCache.filter(function(t){return t.listId===list.id});
+  items.sort(function(a,b){return (a.order||0)-(b.order||0)});
+  var tops=items.filter(function(t){return !t.parentId});
+
+  var bodyHtml=tops.map(function(t){
+    var children=items.filter(function(c){return c.parentId===t.id});
+    children.sort(function(a,b){return (a.order||0)-(b.order||0)});
+    return renderTodoItem(t,false)+children.map(function(c){return renderTodoItem(c,true)}).join('');
+  }).join('');
+
+  if(!bodyHtml)bodyHtml='<div class="empty-day" style="padding:14px 4px">비어있음</div>';
+
+  // 미완료 항목 수
+  var pendingCount=items.filter(function(t){return !t.done}).length;
+  var countBadge=pendingCount>0?'<span class="todo-card-count">'+pendingCount+'</span>':'';
+
+  var colorClass='color-'+(list.color||'accent');
+  return '<div class="todo-card '+colorClass+'" data-list-id="'+escapeHtml(list.id)+'">'
+    +'<div class="todo-card-header">'
+      +'<span class="todo-card-title" onclick="renameTodoList(\''+escapeHtml(list.id)+'\')">'+escapeHtml(list.name)+'</span>'
+      +countBadge
+      +'<button class="todo-card-menu" onclick="openTodoListMenu(event,\''+escapeHtml(list.id)+'\')">⋮</button>'
+    +'</div>'
+    +'<div class="todo-card-body" id="todoBody_'+escapeHtml(list.id)+'">'+bodyHtml+'</div>'
+    +'<div class="todo-add-row" onclick="showAddTodoInput(\''+escapeHtml(list.id)+'\',\'\')">'
+      +'<span class="todo-add-row-icon">+</span><span>할 일 추가</span>'
+    +'</div>'
+  +'</div>';
+}
+
+function renderTodoItem(t,isChild){
+  var pendingClass=t._pending?' card-pending':'';
+  var doneClass=t.done?' done':'';
+  var childClass=isChild?' child':'';
+  var checkedClass=t.done?' checked':'';
+  var addChildBtn=isChild?'':'<button class="todo-action add-child" onclick="event.stopPropagation();showAddTodoInput(\''+escapeHtml(t.listId)+'\',\''+escapeHtml(t.id)+'\')" title="하위 항목 추가">↳</button>';
+  return '<div class="todo-item'+doneClass+childClass+pendingClass+'" data-todo-id="'+escapeHtml(t.id)+'">'
+    +'<div class="todo-check'+checkedClass+'" onclick="toggleTodoDone(\''+escapeHtml(t.id)+'\')"></div>'
+    +'<div class="todo-text" onclick="editTodoStart(\''+escapeHtml(t.id)+'\')">'+escapeHtml(t.text)+'</div>'
+    +'<div class="todo-actions">'
+      +addChildBtn
+      +'<button class="todo-action remove" onclick="event.stopPropagation();removeTodo(\''+escapeHtml(t.id)+'\')" title="삭제">×</button>'
+    +'</div>'
+  +'</div>';
+}
+
+// ── 할일 항목 CRUD ──
+
+function toggleTodoDone(id){
+  var idx=todosCache.findIndex(function(t){return t.id===id});
+  if(idx<0)return;
+  var prev=todosCache[idx].done;
+  todosCache[idx].done=!prev;
+  saveTodoCache();renderTodoBoard();
+  apiWrite('updateTodo',{id:id,done:todosCache[idx].done}).catch(function(e){
+    // 롤백
+    var i=todosCache.findIndex(function(t){return t.id===id});
+    if(i>=0){todosCache[i].done=prev;saveTodoCache();renderTodoBoard()}
+    showToast('상태 변경 실패: '+e.message);
+  });
+}
+
+function showAddTodoInput(listId,parentId){
+  // 기존 입력 필드 제거
+  var existing=document.getElementById('todoAddInput');
+  if(existing)existing.parentNode.removeChild(existing);
+
+  var body=document.getElementById('todoBody_'+listId);
+  if(!body)return;
+  var wrap=document.createElement('div');
+  wrap.id='todoAddInput';
+  wrap.style.padding='6px 4px';
+  if(parentId)wrap.style.paddingLeft='30px';
+  var input=document.createElement('input');
+  input.className='todo-add-input';
+  input.placeholder=parentId?'하위 할 일':'할 일';
+  wrap.appendChild(input);
+  body.appendChild(wrap);
+  input.focus();
+
+  // Enter = 저장, Esc = 취소, blur = 비어있으면 취소
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();var v=input.value.trim();if(v){saveNewTodo(listId,parentId,v);input.value='';input.focus()}else{wrap.remove()}}
+    else if(e.key==='Escape'){wrap.remove()}
+  });
+  input.addEventListener('blur',function(){setTimeout(function(){if(!input.value.trim())wrap.remove()},150)});
+}
+
+function saveNewTodo(listId,parentId,text){
+  var tempId='temp_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
+  var siblings=todosCache.filter(function(t){return t.listId===listId && (t.parentId||'')===(parentId||'')});
+  var nextOrder=siblings.length>0?Math.max.apply(null,siblings.map(function(t){return t.order||0}))+1:0;
+  todosCache.push({id:tempId,listId:listId,parentId:parentId||'',text:text,done:false,order:nextOrder,_pending:true});
+  saveTodoCache();renderTodoBoard();
+  // 다시 입력 필드 띄움 (연속 추가 편의)
+  showAddTodoInput(listId,parentId);
+  apiWrite('addTodo',{listId:listId,parentId:parentId||'',text:text,order:nextOrder}).then(function(r){
+    var idx=todosCache.findIndex(function(t){return t.id===tempId});
+    if(idx>=0 && r.id){todosCache[idx].id=r.id;delete todosCache[idx]._pending;saveTodoCache();renderTodoBoard()}
+  }).catch(function(e){
+    var idx=todosCache.findIndex(function(t){return t.id===tempId});
+    if(idx>=0){todosCache.splice(idx,1);saveTodoCache();renderTodoBoard()}
+    showToast('추가 실패: '+e.message);
+  });
+}
+
+function editTodoStart(id){
+  var item=document.querySelector('[data-todo-id="'+id+'"]');
+  if(!item)return;
+  var textEl=item.querySelector('.todo-text');
+  if(!textEl)return;
+  var current=todosCache.find(function(t){return t.id===id});
+  if(!current)return;
+  var input=document.createElement('input');
+  input.className='todo-text-edit';
+  input.value=current.text;
+  textEl.parentNode.replaceChild(input,textEl);
+  input.focus();
+  input.setSelectionRange(input.value.length,input.value.length);
+  var commit=function(save){
+    var newText=input.value.trim();
+    if(save && newText && newText!==current.text)editTodoSave(id,newText);
+    else renderTodoBoard();
+  };
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();commit(true)}
+    else if(e.key==='Escape'){commit(false)}
+  });
+  input.addEventListener('blur',function(){commit(true)});
+}
+
+function editTodoSave(id,newText){
+  var idx=todosCache.findIndex(function(t){return t.id===id});
+  if(idx<0)return;
+  var prev=todosCache[idx].text;
+  todosCache[idx].text=newText;
+  saveTodoCache();renderTodoBoard();
+  apiWrite('updateTodo',{id:id,text:newText}).catch(function(e){
+    var i=todosCache.findIndex(function(t){return t.id===id});
+    if(i>=0){todosCache[i].text=prev;saveTodoCache();renderTodoBoard()}
+    showToast('수정 실패: '+e.message);
+  });
+}
+
+function removeTodo(id){
+  var t=todosCache.find(function(t){return t.id===id});
+  if(!t)return;
+  var hasChildren=todosCache.some(function(c){return c.parentId===id});
+  var msg=hasChildren?'이 항목과 하위 항목까지 삭제할까요?':'삭제할까요?';
+  if(!confirm(msg))return;
+  // 낙관적 삭제: target과 자식 모두 제거
+  var removed=todosCache.filter(function(t){return t.id===id||t.parentId===id});
+  todosCache=todosCache.filter(function(t){return t.id!==id && t.parentId!==id});
+  saveTodoCache();renderTodoBoard();
+  apiWrite('deleteTodo',null,id).catch(function(e){
+    // 롤백
+    todosCache=todosCache.concat(removed);saveTodoCache();renderTodoBoard();
+    showToast('삭제 실패: '+e.message);
+  });
+}
+
+// ── 할일 리스트 (카드) CRUD ──
+
+function promptNewTodoList(){
+  var name=prompt('새 리스트 이름','새 리스트');
+  if(!name||!name.trim())return;
+  name=name.trim();
+  var tempId='temp_'+Date.now();
+  var nextOrder=todoListsCache.length>0?Math.max.apply(null,todoListsCache.map(function(l){return l.order||0}))+1:0;
+  var colors=['mint','sky','rose','gold','accent','lavender'];
+  var color=colors[todoListsCache.length%colors.length];
+  todoListsCache.push({id:tempId,name:name,order:nextOrder,color:color,_pending:true});
+  saveTodoCache();renderTodoBoard();
+  // 할일 탭이 아니면 이동
+  if(document.querySelector('.tab.active').dataset.tab!=='todo')switchTab('todo');
+  apiWrite('addTodoList',{name:name,order:nextOrder,color:color}).then(function(r){
+    var idx=todoListsCache.findIndex(function(l){return l.id===tempId});
+    if(idx>=0 && r.id){todoListsCache[idx].id=r.id;delete todoListsCache[idx]._pending;saveTodoCache();renderTodoBoard()}
+  }).catch(function(e){
+    var idx=todoListsCache.findIndex(function(l){return l.id===tempId});
+    if(idx>=0){todoListsCache.splice(idx,1);saveTodoCache();renderTodoBoard()}
+    showToast('리스트 생성 실패: '+e.message);
+  });
+}
+
+function renameTodoList(id){
+  var l=todoListsCache.find(function(l){return l.id===id});
+  if(!l)return;
+  var newName=prompt('리스트 이름',l.name);
+  if(!newName||!newName.trim()||newName.trim()===l.name)return;
+  newName=newName.trim();
+  var prev=l.name;
+  l.name=newName;saveTodoCache();renderTodoBoard();
+  apiWrite('updateTodoList',{id:id,name:newName}).catch(function(e){
+    var ll=todoListsCache.find(function(l){return l.id===id});
+    if(ll){ll.name=prev;saveTodoCache();renderTodoBoard()}
+    showToast('이름 변경 실패: '+e.message);
+  });
+}
+
+function openTodoListMenu(event,listId){
+  event.stopPropagation();
+  var overlay=document.getElementById('todoListMenuOverlay');
+  var menu=document.getElementById('todoListMenu');
+  menu.innerHTML='<button onclick="closeTodoListMenu();renameTodoList(\''+escapeHtml(listId)+'\')">이름 변경</button>'
+    +'<button onclick="closeTodoListMenu();cycleTodoListColor(\''+escapeHtml(listId)+'\')">색상 변경</button>'
+    +'<button class="danger" onclick="closeTodoListMenu();removeTodoList(\''+escapeHtml(listId)+'\')">리스트 삭제</button>';
+  // 클릭 위치에 메뉴 배치
+  var rect=event.target.getBoundingClientRect();
+  menu.style.top=(rect.bottom+4)+'px';
+  menu.style.left=Math.max(10,rect.right-140)+'px';
+  overlay.classList.add('open');
+}
+
+function closeTodoListMenu(e){
+  if(e && e.target!==document.getElementById('todoListMenuOverlay'))return;
+  document.getElementById('todoListMenuOverlay').classList.remove('open');
+}
+
+function cycleTodoListColor(id){
+  var l=todoListsCache.find(function(l){return l.id===id});
+  if(!l)return;
+  var colors=['mint','sky','rose','gold','accent','lavender'];
+  var i=colors.indexOf(l.color||'accent');
+  var nextColor=colors[(i+1)%colors.length];
+  var prev=l.color;
+  l.color=nextColor;saveTodoCache();renderTodoBoard();
+  apiWrite('updateTodoList',{id:id,color:nextColor}).catch(function(e){
+    var ll=todoListsCache.find(function(l){return l.id===id});
+    if(ll){ll.color=prev;saveTodoCache();renderTodoBoard()}
+    showToast('색상 변경 실패: '+e.message);
+  });
+}
+
+function removeTodoList(id){
+  var l=todoListsCache.find(function(l){return l.id===id});
+  if(!l)return;
+  var itemCount=todosCache.filter(function(t){return t.listId===id}).length;
+  var msg=itemCount>0?'"'+l.name+'" 리스트와 안의 항목 '+itemCount+'개를 모두 삭제할까요?':'"'+l.name+'" 리스트를 삭제할까요?';
+  if(!confirm(msg))return;
+  // 낙관적 삭제
+  var listIdx=todoListsCache.findIndex(function(l){return l.id===id});
+  var removedList=todoListsCache.splice(listIdx,1)[0];
+  var removedTodos=todosCache.filter(function(t){return t.listId===id});
+  todosCache=todosCache.filter(function(t){return t.listId!==id});
+  saveTodoCache();renderTodoBoard();
+  apiWrite('deleteTodoList',null,id).catch(function(e){
+    todoListsCache.splice(listIdx,0,removedList);
+    todosCache=todosCache.concat(removedTodos);
+    saveTodoCache();renderTodoBoard();
+    showToast('삭제 실패: '+e.message);
+  });
+}
+
 function syncCalendar(){
   var b=document.getElementById('syncBtn');b.disabled=true;b.textContent='동기화 중…';
   apiWrite('syncCalendar').then(function(r){var n=(r.results&&r.results.sheetsToCalendar?r.results.sheetsToCalendar.synced:0)+(r.results&&r.results.calendarToSheets?r.results.calendarToSheets.synced:0);showToast(n+'건 동기화 완료');switchTab(document.querySelector('.tab.active').dataset.tab)}).catch(function(e){showToast('동기화 오류: '+e.message)}).finally(function(){b.disabled=false;b.textContent='동기화'});
@@ -1168,9 +1608,10 @@ document.querySelectorAll('#daySelector .day-toggle').forEach(function(b){b.addE
 document.querySelectorAll('.form-overlay').forEach(function(o){o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('open')})});
 
 loadTheme();
-loadWeekView();
+loadTodos();
 // 첫 로드 시 다른 탭 데이터도 병렬로 미리 받아둠 (캐시 워밍업)
 // 실패해도 무시 — 사용자가 해당 탭 진입 시 다시 시도됨
+loadWeekView();
 loadRoutines();
 loadCares();
 loadTastes();
