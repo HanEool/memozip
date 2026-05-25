@@ -1,5 +1,5 @@
 {
-  "name": "haneol-schedule",
+  "name": "memozip",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,16 +8,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/HanEool/haneol-schedule.git"
+    "url": "git+https://github.com/HanEool/memozip.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/HanEool/haneol-schedule/issues"
+    "url": "https://github.com/HanEool/memozip/issues"
   },
-  "homepage": "https://github.com/HanEool/haneol-schedule#readme",
+  "homepage": "https://github.com/HanEool/memozip#readme",
   "dependencies": {
     "@google/clasp": "^3.3.0"
   }
