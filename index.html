@@ -1439,7 +1439,12 @@ function saveNewTodo(listId,parentId,text){
   showAddTodoInput(listId,parentId);
   apiWrite('addTodo',{listId:listId,parentId:parentId||'',text:text,order:nextOrder}).then(function(r){
     var idx=todosCache.findIndex(function(t){return t.id===tempId});
-    if(idx>=0 && r.id){todosCache[idx].id=r.id;delete todosCache[idx]._pending;saveTodoCache();renderTodoBoard()}
+    if(idx>=0 && r.id){
+      todosCache[idx].id=r.id;delete todosCache[idx]._pending;saveTodoCache();renderTodoBoard();
+    } else if(r.id){
+      // cache에서 tempId 사라짐 = 사용자가 add 진행 중 삭제 클릭. 서버에서도 즉시 정리 (부활 방지)
+      apiWrite('deleteTodo',null,r.id).catch(function(){});
+    }
   }).catch(function(e){
     var idx=todosCache.findIndex(function(t){return t.id===tempId});
     if(idx>=0){todosCache.splice(idx,1);saveTodoCache();renderTodoBoard()}
@@ -1496,7 +1501,10 @@ function removeTodo(id){
   todosCache=todosCache.filter(function(t){return t.id!==id && t.parentId!==id});
   saveTodoCache();renderTodoBoard();
   apiWrite('deleteTodo',null,id).catch(function(e){
-    // 롤백
+    // 'not found'는 백엔드가 success로 처리하니 정상엔 catch 발동 안 함
+    // 백엔드 미배포/타이밍 이슈 안전망 — not found 패턴은 부활 안 함
+    if(/not found/i.test(e.message))return;
+    // 진짜 실패 (네트워크 등): 롤백
     todosCache=todosCache.concat(removed);saveTodoCache();renderTodoBoard();
     showToast('삭제 실패: '+e.message);
   });
@@ -1588,6 +1596,7 @@ function removeTodoList(id){
   todosCache=todosCache.filter(function(t){return t.listId!==id});
   saveTodoCache();renderTodoBoard();
   apiWrite('deleteTodoList',null,id).catch(function(e){
+    if(/not found/i.test(e.message))return;
     todoListsCache.splice(listIdx,0,removedList);
     todosCache=todosCache.concat(removedTodos);
     saveTodoCache();renderTodoBoard();
