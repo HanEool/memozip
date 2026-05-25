@@ -50,6 +50,20 @@ GitHub Pages (index.html)  ←→  Google Apps Script (API)  ←→  Google Shee
 - 예정일: "yyyy-MM-dd" 또는 빈 값
 - 키워드: 쉼표 구분 검색어 (일정 매칭용)
 
+### 할일리스트 시트 (6열)
+아이디 | 이름 | 순서 | 색상 | 수정일시 | GoogleListId
+
+- 색상: mint/sky/rose/gold/accent/lavender 중 하나 (UI 카드 색상)
+- GoogleListId: Google Tasks API의 task list ID (Phase 2 sync 후 채워짐)
+- 기본 리스트 3개 자동 생성: 짓기, 살기, 아이디어
+
+### 할일 시트 (8열)
+아이디 | 리스트아이디 | 부모아이디 | 텍스트 | 완료여부 | 순서 | 수정일시 | GoogleTaskId
+
+- 부모아이디: 비어있으면 top-level, 값 있으면 하위 항목 (2단계까지)
+- 완료여부: boolean (체크박스 토글)
+- GoogleTaskId: Google Tasks API의 task ID
+
 ## API 엔드포인트 (모두 GET)
 
 모든 쓰기 작업도 GET으로 처리 (Apps Script POST의 CORS 문제 회피).
@@ -77,8 +91,21 @@ GitHub Pages (index.html)  ←→  Google Apps Script (API)  ←→  Google Shee
 - `?action=updateCare&data={JSON}`
 - `?action=deleteCare&id=care_xxx`
 
+### 할일 리스트 (카드)
+- `?action=getTodoLists`
+- `?action=addTodoList&data={JSON}`
+- `?action=updateTodoList&data={JSON}`
+- `?action=deleteTodoList&id=todolist_xxx` (해당 리스트의 모든 항목까지 함께 삭제)
+
+### 할일 항목
+- `?action=getTodos[&listId=todolist_xxx]`
+- `?action=addTodo&data={JSON}` (`{listId, parentId, text, done, order}`)
+- `?action=updateTodo&data={JSON}` (부분 업데이트 — 보낸 필드만 갱신)
+- `?action=deleteTodo&id=todo_xxx` (자식 항목까지 함께 삭제)
+
 ### 동기화
-- `?action=syncCalendar`
+- `?action=syncCalendar` (캘린더 양방향)
+- `?action=syncTodosToGoogleTasks` (Sheets → Google Tasks 일괄 push, 멱등)
 
 ## 파일 구조
 
@@ -126,6 +153,21 @@ Cold pastel 기반, dark/bright 모드 전환 지원.
 - 루틴의 개별 인스턴스 수정 → 일정 시트에 예외(routineId 참조)로 기록
 - 루틴의 개별 인스턴스 삭제 → 일정 시트에 status='cancelled'로 기록
 - 삭제 감지는 Calendar Advanced Service 필요 (`detectDeletedInstances()`)
+
+### Sheets → Google Tasks (할일 단방향 sync, 2026-05-25 추가)
+
+**구조**: Sheets가 원본(source of truth) → addTodo/updateTodo/deleteTodo 등 CRUD 시 best-effort로 Google Tasks API 호출. Tasks API 실패해도 Sheets 동작은 정상. Google Tasks → Sheets 역방향은 **안 함**.
+
+**Tasks Advanced Service**: `appsscript.json`의 `dependencies.enabledAdvancedServices`에 명시. `Tasks.Tasklists`, `Tasks.Tasks` 객체 사용.
+
+**최초 1회 권한 승인** (글로벌 CLAUDE.md "MailApp 권한 승인 흐름"과 동일 패턴):
+1. Apps Script 에디터에서 함수 드롭다운 → `testTasksAuth` 선택 → ▷ 실행
+2. "권한 검토" → 계정 선택 → "안전하지 않습니다" → "고급" → "{프로젝트명}(으)로 이동(안전하지 않음)" → "허용"
+3. 로그에 `Tasks API 연결 OK. 현재 Google Tasks 리스트 수: N` 보이면 성공
+
+**기존 데이터 일괄 push**: Phase 1에서 만들어진 짓기/살기/아이디어 리스트는 `googleListId` 빈 상태. 한얼이 에디터에서 `syncAllTodosToGoogleTasks()` 1회 실행하면 일괄 push. 멱등 (이미 매핑된 건 skip).
+
+**자동 sync 동작**: `addTodoList`/`addTodo` 등 호출 시 내부적으로 `gtaskCreateList`/`gtaskCreate` 등 호출. `googleListId`/`googleTaskId` 채워지면 이후 update/delete도 자동 동기. 권한 없으면 try/catch에서 잡고 빈 ID로 진행 (Sheets는 정상 동작).
 
 ## 주의사항
 
