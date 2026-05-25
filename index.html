@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#9b8abf">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" sizes="180x180" href="app-icon.png">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='12' width='56' height='48' rx='6' fill='none' stroke='%239b8abf' stroke-width='3'/%3E%3Crect x='4' y='12' width='56' height='14' rx='6' fill='%239b8abf'/%3E%3Cline x1='20' y1='6' x2='20' y2='18' stroke='%239b8abf' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='44' y1='6' x2='44' y2='18' stroke='%239b8abf' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='22' cy='38' r='3' fill='%2388aec8'/%3E%3Ccircle cx='32' cy='38' r='3' fill='%237cb5a0'/%3E%3Ccircle cx='42' cy='38' r='3' fill='%23c4929c'/%3E%3Ccircle cx='22' cy='50' r='3' fill='%23c4b07a'/%3E%3Ccircle cx='32' cy='50' r='3' fill='%2388aec8'/%3E%3Ccircle cx='42' cy='50' r='3' fill='%239b8abf'/%3E%3C/svg%3E">
 <title>한얼 스케줄</title>
 <style>
@@ -294,7 +295,14 @@
   .todo-card-header{
     display:flex;align-items:center;justify-content:space-between;
     padding:0 4px 10px;margin-bottom:6px;border-bottom:1px solid var(--border-lt);
+    cursor:grab;touch-action:none;-webkit-touch-callout:none;
   }
+  .todo-card-header:active{cursor:grabbing}
+
+  /* Sortable.js 드래그 피드백 */
+  .sortable-ghost{opacity:.35;background:var(--surface2)}
+  .sortable-chosen{box-shadow:var(--sh-lg);transform:scale(1.02)}
+  .sortable-drag{opacity:.9;cursor:grabbing}
   .todo-card-title{
     font-family:'Nanum Myeongjo',serif;font-size:14.5px;font-weight:700;
     color:var(--text);letter-spacing:-.01em;flex:1;cursor:pointer;
@@ -1337,6 +1345,57 @@ function renderTodoBoard(){
   // 끝에 "+ 새 리스트" 카드
   html+='<div class="todo-new-list-card" onclick="promptNewTodoList()">+ 새 리스트</div>';
   c.innerHTML=html;
+  initTodoBoardSortable();
+}
+
+// 카드 드래그-앤-드롭 초기화 (renderTodoBoard 호출마다 재생성)
+var _todoBoardSortable=null;
+function initTodoBoardSortable(){
+  if(typeof Sortable==='undefined')return; // CDN 로드 실패 시 graceful degradation
+  if(_todoBoardSortable){_todoBoardSortable.destroy();_todoBoardSortable=null}
+  var board=document.getElementById('todoBoard');
+  if(!board)return;
+  _todoBoardSortable=new Sortable(board,{
+    animation:200,
+    draggable:'.todo-card', // .todo-new-list-card는 자동 제외
+    handle:'.todo-card-header',
+    filter:'.todo-card-menu', // ⋮ 메뉴 버튼 클릭은 드래그 발동 X
+    preventOnFilter:false, // ⋮ 클릭 onclick 정상 동작
+    // 모바일에서 짧은 탭/스크롤과 구분 — long-press 200ms 후 드래그 시작
+    delay:200,
+    delayOnTouchOnly:true,
+    touchStartThreshold:5,
+    ghostClass:'sortable-ghost',
+    chosenClass:'sortable-chosen',
+    dragClass:'sortable-drag',
+    onEnd:function(evt){onTodoCardReorder(evt.oldIndex,evt.newIndex)}
+  });
+}
+
+function onTodoCardReorder(oldIndex,newIndex){
+  if(oldIndex===newIndex)return;
+  // 현재 order로 정렬된 배열 (renderTodoBoard와 같은 순서)
+  var sorted=todoListsCache.slice().sort(function(a,b){return (a.order||0)-(b.order||0)});
+  if(oldIndex<0||oldIndex>=sorted.length||newIndex<0||newIndex>=sorted.length)return;
+  // splice로 재배치
+  var moved=sorted.splice(oldIndex,1)[0];
+  sorted.splice(newIndex,0,moved);
+  // 모든 카드의 order를 0부터 다시 부여 (이전 값과 다른 것만 서버 sync)
+  var changes=[];
+  sorted.forEach(function(l,i){
+    if(l.order!==i){
+      var cacheItem=todoListsCache.find(function(c){return c.id===l.id});
+      if(cacheItem){cacheItem.order=i;changes.push({id:l.id,order:i})}
+    }
+  });
+  saveTodoCache();renderTodoBoard();
+  // 변경된 카드들 백그라운드 sync (실패해도 일단 화면은 그대로)
+  changes.forEach(function(ch){
+    apiWrite('updateTodoList',ch).catch(function(){
+      // 개별 실패는 토스트만, 롤백은 안 함 (다음 fetch에서 보정)
+    });
+  });
+  if(changes.length)showToast('순서 저장됨');
 }
 
 function renderTodoCard(list){
